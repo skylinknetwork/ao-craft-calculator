@@ -26,7 +26,6 @@ function getItemPrice(itemName) {
 
 async function init() {
   try {
-    // Tambahkan timestamp & no-store agar GitHub Pages selalu memuat recipes.json terbaru
     const resp = await fetch("recipes.json?v=" + new Date().getTime(), {
       cache: "no-store"
     });
@@ -96,8 +95,8 @@ function selectItemAndCalculate(itemName) {
   calculateItem(itemName);
 }
 
-// Rekursi perhitungan: tabel utama hanya mengambil material inti (depth === 1)
-function resolveRecipe(itemName, neededQty, totalsMap, depth = 0) {
+// Rekursi perhitungan: mengumpulkan material inti (directMap) sekaligus bahan dasar dari awal (rawMap)
+function resolveRecipe(itemName, neededQty, directMap, rawMap, depth = 0) {
   const item = DB.items[itemName];
   if (!item) return null;
 
@@ -119,26 +118,36 @@ function resolveRecipe(itemName, neededQty, totalsMap, depth = 0) {
     children: []
   };
 
-  // Masukkan hanya material inti (bahan langsung level 1) ke daftar belanja utama
+  // 1. Masukkan material inti (bahan langsung level 1) ke directMap
   if (depth === 1) {
-    if (!totalsMap[itemName]) {
-      totalsMap[itemName] = {
+    if (!directMap[itemName]) {
+      directMap[itemName] = {
         name: itemName,
         skillName: item.skill_name || "Raw Material",
         qty: 0
       };
     }
-    totalsMap[itemName].qty += neededQty;
+    directMap[itemName].qty += neededQty;
   }
 
+  // 2. Telusuri sub-komponen atau masukkan ke rawMap jika sudah bahan mentah paling dasar
   if (isCraftable) {
     for (const ing of item.ingredients) {
       const subNeeded = ing.qty * batches;
-      const childNode = resolveRecipe(ing.item, subNeeded, totalsMap, depth + 1);
+      const childNode = resolveRecipe(ing.item, subNeeded, directMap, rawMap, depth + 1);
       if (childNode) {
         node.children.push(childNode);
       }
     }
+  } else {
+    if (!rawMap[itemName]) {
+      rawMap[itemName] = {
+        name: itemName,
+        skillName: item.skill_name || "Raw Material",
+        qty: 0
+      };
+    }
+    rawMap[itemName].qty += neededQty;
   }
 
   return node;
@@ -151,8 +160,9 @@ function calculateItem(itemName) {
   currentSelectedItem = itemName;
   const qty = Math.max(1, parseInt(document.getElementById("craftQty").value, 10) || 1);
 
-  const totalsMap = {};
-  const tree = resolveRecipe(itemName, qty, totalsMap, 0);
+  const directMap = {};
+  const rawMap = {};
+  const tree = resolveRecipe(itemName, qty, directMap, rawMap, 0);
 
   document.getElementById("resultArea").classList.remove("hidden");
   document.getElementById("resItemName").textContent = item.name;
@@ -163,17 +173,38 @@ function calculateItem(itemName) {
   document.getElementById("resCraftXp").textContent = fmt(tree.xp);
   document.getElementById("resDefaultPrice").textContent = fmt((item.default_craft_price || 0) * tree.batches) + " Gold";
 
-  renderShoppingTable(totalsMap, tree.producedQty);
+  const zeroSet = new Set();
+
+  // Render Tabel 1: Bahan Utama (Langsung)
+  const directTotalCost = populateMaterialTable("shoppingBody", directMap, zeroSet);
+  updateCostSummary(directTotalCost, tree.producedQty);
+
+  // Render Tabel 2: Bahan Dasar Jika Crafting Dari Awal
+  const rawTotalCost = populateMaterialTable("rawShoppingBody", rawMap, zeroSet);
+  document.getElementById("rawTotalCost").textContent = fmt(rawTotalCost) + " Gold";
+  const rawCostPerItem = tree.producedQty > 0 ? rawTotalCost / tree.producedQty : 0;
+  document.getElementById("rawCostPerItem").textContent = fmt(rawCostPerItem) + " Gold / pcs";
+
+  // Update Banner Peringatan Item Berharga 0 (gabungan dari kedua tabel)
+  const zeroPriceItems = Array.from(zeroSet).sort();
+  const warningEl = document.getElementById("zeroPriceWarning");
+  if (zeroPriceItems.length > 0) {
+    warningEl.classList.remove("hidden");
+    warningEl.innerHTML = `⚠️ <strong>PERINGATAN:</strong> Silakan input harga pasar untuk item yang masih bernilai <strong>0 Gold</strong> berikut agar total biaya akurat: <span class="warning-items-list">${zeroPriceItems.join(", ")}</span>`;
+  } else {
+    warningEl.classList.add("hidden");
+    warningEl.innerHTML = "";
+  }
+
   renderTree(tree);
 }
 
-function renderShoppingTable(totalsMap, totalProduced) {
-  const tbody = document.getElementById("shoppingBody");
+function populateMaterialTable(tbodyId, dataMap, zeroSet) {
+  const tbody = document.getElementById(tbodyId);
   tbody.innerHTML = "";
 
-  const list = Object.values(totalsMap).sort((a, b) => a.name.localeCompare(b.name));
+  const list = Object.values(dataMap).sort((a, b) => a.name.localeCompare(b.name));
   let grandTotalCost = 0;
-  const zeroPriceItems = [];
 
   list.forEach((entry) => {
     const unitPrice = getItemPrice(entry.name);
@@ -181,7 +212,7 @@ function renderShoppingTable(totalsMap, totalProduced) {
     grandTotalCost += subTotal;
 
     if (unitPrice <= 0) {
-      zeroPriceItems.push(entry.name);
+      zeroSet.add(entry.name);
     }
 
     const tr = document.createElement("tr");
@@ -199,18 +230,6 @@ function renderShoppingTable(totalsMap, totalProduced) {
     tbody.appendChild(tr);
   });
 
-  // Update Banner Peringatan Item Berharga 0
-  const warningEl = document.getElementById("zeroPriceWarning");
-  if (zeroPriceItems.length > 0) {
-    warningEl.classList.remove("hidden");
-    warningEl.innerHTML = `⚠️ <strong>PERINGATAN:</strong> Silakan input harga pasar untuk item yang masih bernilai <strong>0 Gold</strong> berikut agar total biaya akurat: <span class="warning-items-list">${zeroPriceItems.join(", ")}</span>`;
-  } else {
-    warningEl.classList.add("hidden");
-    warningEl.innerHTML = "";
-  }
-
-  updateCostSummary(grandTotalCost, totalProduced);
-
   tbody.querySelectorAll(".row-price-input").forEach((inp) => {
     inp.addEventListener("change", (e) => {
       const name = e.target.getAttribute("data-item");
@@ -221,6 +240,8 @@ function renderShoppingTable(totalsMap, totalProduced) {
       calculateItem(currentSelectedItem);
     });
   });
+
+  return grandTotalCost;
 }
 
 function updateCostSummary(totalCost, totalProduced) {
