@@ -141,17 +141,6 @@ function resolveRecipe(itemName, neededQty, totalsMap, depth = 0) {
   return node;
 }
 
-function sumTreeStats(node) {
-  let workload = node.workload;
-  let xp = node.xp;
-  for (const ch of node.children) {
-    const st = sumTreeStats(ch);
-    workload += st.workload;
-    xp += st.xp;
-  }
-  return { workload, xp };
-}
-
 function calculateItem(itemName) {
   const item = DB.items[itemName];
   if (!item) return;
@@ -161,15 +150,15 @@ function calculateItem(itemName) {
 
   const totalsMap = {};
   const tree = resolveRecipe(itemName, qty, totalsMap, 0);
-  const stats = sumTreeStats(tree);
 
   document.getElementById("resultArea").classList.remove("hidden");
   document.getElementById("resItemName").textContent = item.name;
   document.getElementById("resSkill").textContent = item.craftable
     ? `${item.skill_name} Lv.${item.skill_level}`
     : "Tidak bisa di-craft (Bahan Dasar)";
-  document.getElementById("resWorkload").textContent = fmt(stats.workload);
-  document.getElementById("resCraftXp").textContent = fmt(stats.xp);
+  // Workload & Craft XP murni dari item utama yang di-craft saja
+  document.getElementById("resWorkload").textContent = fmt(tree.workload);
+  document.getElementById("resCraftXp").textContent = fmt(tree.xp);
   document.getElementById("resDefaultPrice").textContent = fmt((item.default_craft_price || 0) * tree.batches) + " Gold";
 
   renderShoppingTable(totalsMap, tree.producedQty);
