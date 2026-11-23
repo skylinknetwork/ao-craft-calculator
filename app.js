@@ -37,13 +37,6 @@ async function init() {
     document.getElementById("loadingBox").classList.add("hidden");
     populateSkills();
     populateCategoryItems("");
-
-    const defaultItem = DB.items["Sharp Sapphire Necklace"]
-      ? "Sharp Sapphire Necklace"
-      : craftableItemsList[0]?.name;
-    if (defaultItem) {
-      selectItemAndCalculate(defaultItem);
-    }
   } catch (err) {
     document.getElementById("loadingBox").textContent = "❌ Error: " + err.message;
   }
