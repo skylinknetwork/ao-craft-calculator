@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AO Craft Calculator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <h1>⚔️ Atlantica Online Craft Calculator</h1>
+      <div class="topbar-actions">
+        <button id="btnCustomPrices" class="btn btn-secondary">💰 Atur Harga Bahan</button>
+        <button id="btnResetPrices" class="btn btn-danger-outline" title="Hapus semua harga kustom">Reset Harga</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Panel Pencarian & Pengaturan Utama -->
+    <section class="card control-panel">
+      <div class="grid-3">
+        <div class="form-group">
+          <label for="skillSelect">Filter Kategori Skill</label>
+          <select id="skillSelect">
+            <option value="">-- Semua Skill (41) --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="itemSearch">Cari Nama Item</label>
+          <input type="text" id="itemSearch" list="itemDatalist" placeholder="Ketik nama item, misal: Apocalyptic Gloves..." autocomplete="off" />
+          <datalist id="itemDatalist"></datalist>
+        </div>
+
+        <div class="form-group">
+          <label for="craftQty">Jumlah Ingin Dibuat (Qty)</label>
+          <div class="qty-row">
+            <input type="number" id="craftQty" value="1" min="1" step="1" />
+            <button id="btnCalculate" class="btn btn-primary">Hitung</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="options-bar">
+        <label class="checkbox-label">
+          <input type="checkbox" id="chkBreakSub" checked />
+          Pecah sub-komponen sampai bahan mentah paling dasar
+        </label>
+        <div class="xp-sim-group">
+          <label for="currentLevel">Level Skill Saat Ini:</label>
+          <input type="number" id="currentLevel" value="1" min="1" max="180" />
+          <label for="xpBonus">Bonus XP (%):</label>
+          <input type="number" id="xpBonus" value="0" min="0" max="1000" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Status Loading -->
+    <div id="loadingBox" class="loading-box">⏳ Memuat database 3.029 item dari recipes.json...</div>
+
+    <!-- Hasil Kalkulasi -->
+    <div id="resultArea" class="hidden">
+      <!-- Ringkasan Info Item & Biaya -->
+      <section class="grid-2">
+        <div class="card">
+          <h2 id="resItemName">-</h2>
+          <table class="info-table">
+            <tr>
+              <th>Required Skill</th>
+              <td id="resSkill">-</td>
+            </tr>
+            <tr>
+              <th>Batch Size</th>
+              <td id="resBatchSize">-</td>
+            </tr>
+            <tr>
+              <th>Total Batch Diproduksi</th>
+              <td id="resTotalBatches">-</td>
+            </tr>
+            <tr>
+              <th>Total Item Dihasilkan</th>
+              <td id="resTotalProduced">-</td>
+            </tr>
+            <tr>
+              <th>Total Workload</th>
+              <td id="resWorkload">-</td>
+            </tr>
+            <tr>
+              <th>Total Craft XP</th>
+              <td id="resCraftXp">-</td>
+            </tr>
+            <tr>
+              <th>Estimasi Kenaikan Level</th>
+              <td id="resLevelGain">-</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="card">
+          <h2>Ringkasan Biaya & Harga</h2>
+          <table class="info-table">
+            <tr>
+              <th>Default Craft Price (NPC/Ref)</th>
+              <td id="resDefaultPrice">-</td>
+            </tr>
+            <tr>
+              <th>Total Biaya Bahan (Custom/Market)</th>
+              <td id="resTotalCost" class="highlight-gold">-</td>
+            </tr>
+            <tr>
+              <th>Harga Modal per 1 Item</th>
+              <td id="resCostPerItem">-</td>
+            </tr>
+            <tr>
+              <th>Harga Jual Item Ini (Opsional)</th>
+              <td>
+                <input type="text" id="sellPriceInput" class="price-input" placeholder="0" />
+              </td>
+            </tr>
+            <tr>
+              <th>Estimasi Profit / Rugi</th>
+              <td id="resProfit">-</td>
+            </tr>
+          </table>
+        </div>
+      </section>
+
+      <!-- Tabel Rekap Bahan Mentah / Dasar yang Harus Dibeli -->
+      <section class="card">
+        <div class="section-header">
+          <h2>📦 Total Bahan yang Dibutuhkan (Shopping List)</h2>
+          <span class="hint">Klik angka harga satuan untuk langsung mengubah harga pasar (otomatis tersimpan)</span>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="shoppingTable">
+            <thead>
+              <tr>
+                <th>Nama Bahan</th>
+                <th>Kategori</th>
+                <th class="text-right">Jumlah</th>
+                <th class="text-right">Harga Satuan (Gold)</th>
+                <th class="text-right">Subtotal (Gold)</th>
+              </tr>
+            </thead>
+            <tbody id="shoppingBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Pohon Crafting (Crafting Tree) -->
+      <section class="card">
+        <div class="section-header">
+          <h2>🌳 Pohon Resep Bertingkat (Crafting Tree)</h2>
+          <span class="hint">Rincian bahan langsung dan sub-komponen yang harus di-craft</span>
+        </div>
+        <div id="treeContainer" class="tree-container"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Modal Atur Harga Custom -->
+  <div id="priceModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>💰 Daftar Harga Kustom Tersimpan</h2>
+        <button id="btnCloseModal" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="modalSearchInput" placeholder="Cari nama item untuk atur harganya..." />
+        <div class="table-responsive modal-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nama Item</th>
+                <th>Kategori</th>
+                <th class="text-right">Harga Kustom (Gold)</th>
+              </tr>
+            </thead>
+            <tbody id="modalPriceBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
