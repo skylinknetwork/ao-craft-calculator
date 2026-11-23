@@ -20,22 +20,29 @@
   <main class="container">
     <!-- Panel Pencarian & Pengaturan Utama -->
     <section class="card control-panel">
-      <div class="grid-3">
+      <div class="grid-4">
         <div class="form-group">
-          <label for="skillSelect">Filter Kategori Skill</label>
+          <label for="skillSelect">1. Kategori Skill</label>
           <select id="skillSelect">
             <option value="">-- Semua Skill (41) --</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label for="itemSearch">Cari Nama Item</label>
-          <input type="text" id="itemSearch" list="itemDatalist" placeholder="Ketik nama item, misal: Apocalyptic Gloves..." autocomplete="off" />
-          <datalist id="itemDatalist"></datalist>
+          <label for="categoryItemSelect">2. Pilih Item (Sesuai Kategori)</label>
+          <select id="categoryItemSelect">
+            <option value="">-- Pilih Item --</option>
+          </select>
+        </div>
+
+        <div class="form-group search-wrapper">
+          <label for="itemSearch">Atau Cari Cepat Nama Item</label>
+          <input type="text" id="itemSearch" placeholder="Ketik nama item..." autocomplete="off" />
+          <div id="searchDropdown" class="search-dropdown hidden"></div>
         </div>
 
         <div class="form-group">
-          <label for="craftQty">Jumlah Ingin Dibuat (Qty)</label>
+          <label for="craftQty">Jumlah (Qty)</label>
           <div class="qty-row">
             <input type="number" id="craftQty" value="1" min="1" step="1" />
             <button id="btnCalculate" class="btn btn-primary">Hitung</button>
@@ -43,22 +50,12 @@
         </div>
       </div>
 
-      <div class="options-bar">
-        <label class="checkbox-label">
-          <input type="checkbox" id="chkBreakSub" checked />
-          Pecah sub-komponen sampai bahan mentah paling dasar
-        </label>
-        <div class="xp-sim-group">
-          <label for="currentLevel">Level Skill Saat Ini:</label>
-          <input type="number" id="currentLevel" value="1" min="1" max="180" />
-          <label for="xpBonus">Bonus XP (%):</label>
-          <input type="number" id="xpBonus" value="0" min="0" max="1000" />
-        </div>
-      </div>
+      <!-- Peringatan Item Berharga 0 -->
+      <div id="zeroPriceWarning" class="warning-banner hidden"></div>
     </section>
 
     <!-- Status Loading -->
-    <div id="loadingBox" class="loading-box">⏳ Memuat database 3.029 item dari recipes.json...</div>
+    <div id="loadingBox" class="loading-box">⏳ Memuat database item dari recipes.json...</div>
 
     <!-- Hasil Kalkulasi -->
     <div id="resultArea" class="hidden">
@@ -72,28 +69,12 @@
               <td id="resSkill">-</td>
             </tr>
             <tr>
-              <th>Batch Size</th>
-              <td id="resBatchSize">-</td>
-            </tr>
-            <tr>
-              <th>Total Batch Diproduksi</th>
-              <td id="resTotalBatches">-</td>
-            </tr>
-            <tr>
-              <th>Total Item Dihasilkan</th>
-              <td id="resTotalProduced">-</td>
-            </tr>
-            <tr>
               <th>Total Workload</th>
               <td id="resWorkload">-</td>
             </tr>
             <tr>
               <th>Total Craft XP</th>
               <td id="resCraftXp">-</td>
-            </tr>
-            <tr>
-              <th>Estimasi Kenaikan Level</th>
-              <td id="resLevelGain">-</td>
             </tr>
           </table>
         </div>
