@@ -96,7 +96,7 @@ function selectItemAndCalculate(itemName) {
   calculateItem(itemName);
 }
 
-// Rekursi perhitungan: otomatis breakdown semua sub-komponen sampai bahan mentah dasar
+// Rekursi perhitungan: tabel utama hanya mengambil material inti (depth === 1)
 function resolveRecipe(itemName, neededQty, totalsMap, depth = 0) {
   const item = DB.items[itemName];
   if (!item) return null;
@@ -119,15 +119,8 @@ function resolveRecipe(itemName, neededQty, totalsMap, depth = 0) {
     children: []
   };
 
-  if (isCraftable) {
-    for (const ing of item.ingredients) {
-      const subNeeded = ing.qty * batches;
-      const childNode = resolveRecipe(ing.item, subNeeded, totalsMap, depth + 1);
-      if (childNode) {
-        node.children.push(childNode);
-      }
-    }
-  } else {
+  // Masukkan hanya material inti (bahan langsung level 1) ke daftar belanja utama
+  if (depth === 1) {
     if (!totalsMap[itemName]) {
       totalsMap[itemName] = {
         name: itemName,
@@ -136,6 +129,16 @@ function resolveRecipe(itemName, neededQty, totalsMap, depth = 0) {
       };
     }
     totalsMap[itemName].qty += neededQty;
+  }
+
+  if (isCraftable) {
+    for (const ing of item.ingredients) {
+      const subNeeded = ing.qty * batches;
+      const childNode = resolveRecipe(ing.item, subNeeded, totalsMap, depth + 1);
+      if (childNode) {
+        node.children.push(childNode);
+      }
+    }
   }
 
   return node;
@@ -156,7 +159,6 @@ function calculateItem(itemName) {
   document.getElementById("resSkill").textContent = item.craftable
     ? `${item.skill_name} Lv.${item.skill_level}`
     : "Tidak bisa di-craft (Bahan Dasar)";
-  // Workload & Craft XP murni dari item utama yang di-craft saja
   document.getElementById("resWorkload").textContent = fmt(tree.workload);
   document.getElementById("resCraftXp").textContent = fmt(tree.xp);
   document.getElementById("resDefaultPrice").textContent = fmt((item.default_craft_price || 0) * tree.batches) + " Gold";
