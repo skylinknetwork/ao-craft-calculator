@@ -171,19 +171,20 @@ function calculateItem(itemName) {
     : "Tidak bisa di-craft (Bahan Dasar)";
   document.getElementById("resWorkload").textContent = fmt(tree.workload);
   document.getElementById("resCraftXp").textContent = fmt(tree.xp);
-  document.getElementById("resDefaultPrice").textContent = fmt((item.default_craft_price || 0) * tree.batches) + " Gold";
 
   const zeroSet = new Set();
 
-  // Render Tabel 1: Bahan Utama (Langsung)
+  // Render Tabel 1: Bahan Utama (Custom / Market)
   const directTotalCost = populateMaterialTable("shoppingBody", directMap, zeroSet);
-  updateCostSummary(directTotalCost, tree.producedQty);
 
   // Render Tabel 2: Bahan Dasar Jika Crafting Dari Awal
   const rawTotalCost = populateMaterialTable("rawShoppingBody", rawMap, zeroSet);
   document.getElementById("rawTotalCost").textContent = fmt(rawTotalCost) + " Gold";
   const rawCostPerItem = tree.producedQty > 0 ? rawTotalCost / tree.producedQty : 0;
   document.getElementById("rawCostPerItem").textContent = fmt(rawCostPerItem) + " Gold / pcs";
+
+  // Update seluruh ringkasan biaya, modal, dan profit untuk kedua metode
+  updateCostSummary(directTotalCost, rawTotalCost, tree.producedQty);
 
   // Update Banner Peringatan Item Berharga 0 (gabungan dari kedua tabel)
   const zeroPriceItems = Array.from(zeroSet).sort();
@@ -244,22 +245,36 @@ function populateMaterialTable(tbodyId, dataMap, zeroSet) {
   return grandTotalCost;
 }
 
-function updateCostSummary(totalCost, totalProduced) {
-  document.getElementById("resTotalCost").textContent = fmt(totalCost) + " Gold";
-  const costPerItem = totalProduced > 0 ? totalCost / totalProduced : 0;
-  document.getElementById("resCostPerItem").textContent = fmt(costPerItem) + " Gold / pcs";
+function formatProfitElement(el, profit) {
+  el.textContent = (profit >= 0 ? "+" : "-") + fmt(Math.abs(profit)) + " Gold";
+  el.className = profit >= 0 ? "profit-plus" : "profit-minus";
+}
 
+function updateCostSummary(directTotalCost, rawTotalCost, totalProduced) {
+  // 1. Biaya & Modal Custom / Market
+  document.getElementById("resDirectTotalCost").textContent = fmt(directTotalCost) + " Gold";
+  const directCostPerItem = totalProduced > 0 ? directTotalCost / totalProduced : 0;
+  document.getElementById("resDirectCostPerItem").textContent = fmt(directCostPerItem) + " Gold / pcs";
+
+  // 2. Biaya & Modal Craft dari Awal
+  document.getElementById("resRawTotalCost").textContent = fmt(rawTotalCost) + " Gold";
+  const rawCostPerItem = totalProduced > 0 ? rawTotalCost / totalProduced : 0;
+  document.getElementById("resRawCostPerItem").textContent = fmt(rawCostPerItem) + " Gold / pcs";
+
+  // 3. Profit untuk masing-masing metode
   const sellUnit = parseNum(document.getElementById("sellPriceInput").value);
-  const profitEl = document.getElementById("resProfit");
+  const directProfitEl = document.getElementById("resDirectProfit");
+  const rawProfitEl = document.getElementById("resRawProfit");
 
   if (sellUnit > 0) {
     const totalRevenue = sellUnit * totalProduced;
-    const profit = totalRevenue - totalCost;
-    profitEl.textContent = (profit >= 0 ? "+" : "-") + fmt(Math.abs(profit)) + " Gold";
-    profitEl.className = profit >= 0 ? "profit-plus" : "profit-minus";
+    formatProfitElement(directProfitEl, totalRevenue - directTotalCost);
+    formatProfitElement(rawProfitEl, totalRevenue - rawTotalCost);
   } else {
-    profitEl.textContent = "-";
-    profitEl.className = "";
+    directProfitEl.textContent = "-";
+    directProfitEl.className = "";
+    rawProfitEl.textContent = "-";
+    rawProfitEl.className = "";
   }
 }
 
