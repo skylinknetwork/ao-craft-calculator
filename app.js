@@ -26,7 +26,10 @@ function getItemPrice(itemName) {
 
 async function init() {
   try {
-    const resp = await fetch("recipes.json");
+    // Tambahkan timestamp & no-store agar GitHub Pages selalu memuat recipes.json terbaru
+    const resp = await fetch("recipes.json?v=" + new Date().getTime(), {
+      cache: "no-store"
+    });
     if (!resp.ok) throw new Error("Gagal memuat recipes.json");
     DB = await resp.json();
 
