@@ -1,6 +1,7 @@
 let DB = null;
 let customPrices = JSON.parse(localStorage.getItem("ao_custom_prices") || "{}");
 let currentSelectedItem = null;
+let craftableItemsList = [];
 
 const fmt = (num) => Math.round(num || 0).toLocaleString("en-US");
 const parseNum = (str) => parseInt(String(str || "0").replace(/[^\d]/g, ""), 10) || 0;
@@ -29,16 +30,22 @@ async function init() {
     if (!resp.ok) throw new Error("Gagal memuat recipes.json");
     DB = await resp.json();
 
+    craftableItemsList = Object.values(DB.items)
+      .filter((item) => item.craftable)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
     document.getElementById("loadingBox").classList.add("hidden");
     populateSkills();
-    populateDatalist("");
+    populateCategoryItems("");
 
-    // Default contoh pertama kali buka
-    const defaultItem = DB.items["Apocalyptic Gloves"] ? "Apocalyptic Gloves" : Object.keys(DB.items)[0];
-    document.getElementById("itemSearch").value = defaultItem;
-    calculateItem(defaultItem);
+    const defaultItem = DB.items["Sharp Sapphire Necklace"]
+      ? "Sharp Sapphire Necklace"
+      : craftableItemsList[0]?.name;
+    if (defaultItem) {
+      selectItemAndCalculate(defaultItem);
+    }
   } catch (err) {
-    document.getElementById("loadingBox").textContent = "❌ Error: " + err.message + " (Pastikan dijalankan lewat server/GitHub Pages)";
+    document.getElementById("loadingBox").textContent = "❌ Error: " + err.message;
   }
 }
 
@@ -52,33 +59,56 @@ function populateSkills() {
   });
 }
 
-function populateDatalist(skillFilter) {
-  const datalist = document.getElementById("itemDatalist");
-  datalist.innerHTML = "";
-  const names = Object.keys(DB.items).sort();
+function populateCategoryItems(skillFilter) {
+  const catSelect = document.getElementById("categoryItemSelect");
+  catSelect.innerHTML = "";
 
-  for (const name of names) {
-    const item = DB.items[name];
-    if (!item.craftable) continue;
-    if (skillFilter && item.skill_name !== skillFilter) continue;
+  const filtered = craftableItemsList
+    .filter((item) => !skillFilter || item.skill_name === skillFilter)
+    .sort((a, b) => (a.skill_level - b.skill_level) || a.name.localeCompare(b.name));
 
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = `-- Pilih Item (${filtered.length} resep) --`;
+  catSelect.appendChild(placeholder);
+
+  filtered.forEach((item) => {
     const opt = document.createElement("option");
-    opt.value = name;
-    datalist.appendChild(opt);
+    opt.value = item.name;
+    opt.textContent = `[Lv.${item.skill_level}] ${item.name}`;
+    catSelect.appendChild(opt);
+  });
+
+  if (currentSelectedItem && filtered.some((i) => i.name === currentSelectedItem)) {
+    catSelect.value = currentSelectedItem;
   }
 }
 
-// Rekursi perhitungan kebutuhan bahan & pohon crafting
-function resolveRecipe(itemName, neededQty, breakSub, totalsMap, depth = 0) {
+function selectItemAndCalculate(itemName) {
+  const item = DB.items[itemName];
+  if (!item) return;
+
+  const skillSelect = document.getElementById("skillSelect");
+  if (skillSelect.value && skillSelect.value !== item.skill_name) {
+    skillSelect.value = item.skill_name;
+    populateCategoryItems(item.skill_name);
+  }
+  document.getElementById("categoryItemSelect").value = itemName;
+  document.getElementById("itemSearch").value = itemName;
+  document.getElementById("searchDropdown").classList.add("hidden");
+
+  calculateItem(itemName);
+}
+
+// Rekursi perhitungan: otomatis breakdown semua sub-komponen sampai bahan mentah dasar
+function resolveRecipe(itemName, neededQty, totalsMap, depth = 0) {
   const item = DB.items[itemName];
   if (!item) return null;
 
   const isCraftable = item.craftable && item.ingredients && item.ingredients.length > 0;
-  const shouldBreak = isCraftable && (depth === 0 || breakSub);
-
   const batchSize = item.batch_size > 0 ? item.batch_size : 1;
-  const batches = shouldBreak ? Math.ceil(neededQty / batchSize) : 0;
-  const producedQty = shouldBreak ? batches * batchSize : neededQty;
+  const batches = isCraftable ? Math.ceil(neededQty / batchSize) : 0;
+  const producedQty = isCraftable ? batches * batchSize : neededQty;
 
   const node = {
     name: itemName,
@@ -90,20 +120,18 @@ function resolveRecipe(itemName, neededQty, breakSub, totalsMap, depth = 0) {
     workload: batches * (item.workload || 0),
     xp: batches * (item.craft_xp || 0),
     isCraftable,
-    shouldBreak,
     children: []
   };
 
-  if (shouldBreak) {
+  if (isCraftable) {
     for (const ing of item.ingredients) {
       const subNeeded = ing.qty * batches;
-      const childNode = resolveRecipe(ing.item, subNeeded, breakSub, totalsMap, depth + 1);
+      const childNode = resolveRecipe(ing.item, subNeeded, totalsMap, depth + 1);
       if (childNode) {
         node.children.push(childNode);
       }
     }
   } else {
-    // Masukkan ke daftar bahan akhir yang harus dibeli
     if (!totalsMap[itemName]) {
       totalsMap[itemName] = {
         name: itemName,
@@ -128,56 +156,24 @@ function sumTreeStats(node) {
   return { workload, xp };
 }
 
-function estimateLevelGain(startLv, gainedXp) {
-  const table = DB.experience_table || [];
-  if (!table.length || gainedXp <= 0) return `Lv.${startLv} (+${fmt(gainedXp)} XP)`;
-
-  let lv = Math.max(1, Math.min(180, startLv));
-  let remainingXp = gainedXp;
-
-  while (lv < 180) {
-    const nextRow = table.find((r) => r.level === lv + 1);
-    if (!nextRow || nextRow.xp_required <= 0) break;
-    if (remainingXp >= nextRow.xp_required) {
-      remainingXp -= nextRow.xp_required;
-      lv++;
-    } else {
-      break;
-    }
-  }
-
-  if (lv > startLv) {
-    return `Lv.${startLv} ➔ Lv.${lv} (Naik ${lv - startLv} Level!)`;
-  }
-  return `Tetap Lv.${startLv} (+${fmt(gainedXp)} XP)`;
-}
-
 function calculateItem(itemName) {
   const item = DB.items[itemName];
   if (!item) return;
 
   currentSelectedItem = itemName;
   const qty = Math.max(1, parseInt(document.getElementById("craftQty").value, 10) || 1);
-  const breakSub = document.getElementById("chkBreakSub").checked;
-  const startLv = parseInt(document.getElementById("currentLevel").value, 10) || 1;
-  const xpBonus = parseFloat(document.getElementById("xpBonus").value) || 0;
 
   const totalsMap = {};
-  const tree = resolveRecipe(itemName, qty, breakSub, totalsMap, 0);
+  const tree = resolveRecipe(itemName, qty, totalsMap, 0);
   const stats = sumTreeStats(tree);
-  const finalXp = Math.round(stats.xp * (1 + xpBonus / 100));
 
   document.getElementById("resultArea").classList.remove("hidden");
   document.getElementById("resItemName").textContent = item.name;
   document.getElementById("resSkill").textContent = item.craftable
     ? `${item.skill_name} Lv.${item.skill_level}`
     : "Tidak bisa di-craft (Bahan Dasar)";
-  document.getElementById("resBatchSize").textContent = fmt(item.batch_size);
-  document.getElementById("resTotalBatches").textContent = fmt(tree.batches) + " batch";
-  document.getElementById("resTotalProduced").textContent = fmt(tree.producedQty) + " pcs";
   document.getElementById("resWorkload").textContent = fmt(stats.workload);
-  document.getElementById("resCraftXp").textContent = fmt(finalXp) + (xpBonus > 0 ? ` (+${xpBonus}%)` : "");
-  document.getElementById("resLevelGain").textContent = estimateLevelGain(startLv, finalXp);
+  document.getElementById("resCraftXp").textContent = fmt(stats.xp);
   document.getElementById("resDefaultPrice").textContent = fmt((item.default_craft_price || 0) * tree.batches) + " Gold";
 
   renderShoppingTable(totalsMap, tree.producedQty);
@@ -190,11 +186,16 @@ function renderShoppingTable(totalsMap, totalProduced) {
 
   const list = Object.values(totalsMap).sort((a, b) => a.name.localeCompare(b.name));
   let grandTotalCost = 0;
+  const zeroPriceItems = [];
 
   list.forEach((entry) => {
     const unitPrice = getItemPrice(entry.name);
     const subTotal = unitPrice * entry.qty;
     grandTotalCost += subTotal;
+
+    if (unitPrice <= 0) {
+      zeroPriceItems.push(entry.name);
+    }
 
     const tr = document.createElement("tr");
     const isRaw = entry.skillName === "Raw Material";
@@ -204,16 +205,25 @@ function renderShoppingTable(totalsMap, totalProduced) {
       <td><span class="badge-skill ${isRaw ? "badge-raw" : ""}">${entry.skillName}</span></td>
       <td class="text-right">${fmt(entry.qty)}</td>
       <td class="text-right">
-        <input type="text" class="price-input row-price-input" data-item="${entry.name.replace(/"/g, "&quot;")}" value="${fmt(unitPrice)}" />
+        <input type="text" class="price-input row-price-input ${unitPrice <= 0 ? "input-zero-alert" : ""}" data-item="${entry.name.replace(/"/g, "&quot;")}" value="${fmt(unitPrice)}" />
       </td>
       <td class="text-right row-subtotal">${fmt(subTotal)}</td>
     `;
     tbody.appendChild(tr);
   });
 
+  // Update Banner Peringatan Item Berharga 0
+  const warningEl = document.getElementById("zeroPriceWarning");
+  if (zeroPriceItems.length > 0) {
+    warningEl.classList.remove("hidden");
+    warningEl.innerHTML = `⚠️ <strong>PERINGATAN:</strong> Silakan input harga pasar untuk item yang masih bernilai <strong>0 Gold</strong> berikut agar total biaya akurat: <span class="warning-items-list">${zeroPriceItems.join(", ")}</span>`;
+  } else {
+    warningEl.classList.add("hidden");
+    warningEl.innerHTML = "";
+  }
+
   updateCostSummary(grandTotalCost, totalProduced);
 
-  // Event edit harga langsung di tabel
   tbody.querySelectorAll(".row-price-input").forEach((inp) => {
     inp.addEventListener("change", (e) => {
       const name = e.target.getAttribute("data-item");
@@ -257,7 +267,7 @@ function buildTreeElement(node, isRoot) {
   const wrapper = document.createElement("div");
   wrapper.className = isRoot ? "tree-node root-node" : "tree-node";
 
-  const skillInfo = node.shouldBreak
+  const skillInfo = node.isCraftable
     ? `${node.skillName} Lv.${node.skillLevel} • ${fmt(node.batches)} batch`
     : `${node.skillName || "Bahan Dasar"}`;
 
@@ -281,36 +291,72 @@ function buildTreeElement(node, isRoot) {
   return wrapper;
 }
 
-// Event Listeners
+// === EVENT LISTENERS ===
 document.getElementById("skillSelect").addEventListener("change", (e) => {
-  populateDatalist(e.target.value);
+  populateCategoryItems(e.target.value);
 });
 
-document.getElementById("itemSearch").addEventListener("change", (e) => {
-  const val = e.target.value.trim();
-  if (DB && DB.items[val]) {
+document.getElementById("categoryItemSelect").addEventListener("change", (e) => {
+  const val = e.target.value;
+  if (val && DB.items[val]) {
+    document.getElementById("itemSearch").value = val;
     calculateItem(val);
+  }
+});
+
+const searchInput = document.getElementById("itemSearch");
+const searchDropdown = document.getElementById("searchDropdown");
+
+searchInput.addEventListener("input", () => {
+  const kw = searchInput.value.trim().toLowerCase();
+  searchDropdown.innerHTML = "";
+
+  if (!kw) {
+    searchDropdown.classList.add("hidden");
+    return;
+  }
+
+  const matches = craftableItemsList
+    .filter((item) => item.name.toLowerCase().includes(kw))
+    .slice(0, 30);
+
+  if (matches.length === 0) {
+    searchDropdown.classList.add("hidden");
+    return;
+  }
+
+  matches.forEach((item) => {
+    const div = document.createElement("div");
+    div.className = "search-item";
+    div.innerHTML = `
+      <span class="search-item-name">${item.name}</span>
+      <span class="search-item-skill">${item.skill_name} Lv.${item.skill_level}</span>
+    `;
+    div.addEventListener("click", () => {
+      selectItemAndCalculate(item.name);
+    });
+    searchDropdown.appendChild(div);
+  });
+
+  searchDropdown.classList.remove("hidden");
+});
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".search-wrapper")) {
+    searchDropdown.classList.add("hidden");
   }
 });
 
 document.getElementById("btnCalculate").addEventListener("click", () => {
-  const val = document.getElementById("itemSearch").value.trim();
+  const val = searchInput.value.trim();
   if (DB && DB.items[val]) {
-    calculateItem(val);
-  } else {
-    alert("Nama item tidak ditemukan, pilih dari daftar saran ya!");
+    selectItemAndCalculate(val);
+  } else if (currentSelectedItem) {
+    calculateItem(currentSelectedItem);
   }
 });
 
-document.getElementById("chkBreakSub").addEventListener("change", () => {
-  if (currentSelectedItem) calculateItem(currentSelectedItem);
-});
-
-document.getElementById("currentLevel").addEventListener("change", () => {
-  if (currentSelectedItem) calculateItem(currentSelectedItem);
-});
-
-document.getElementById("xpBonus").addEventListener("change", () => {
+document.getElementById("craftQty").addEventListener("change", () => {
   if (currentSelectedItem) calculateItem(currentSelectedItem);
 });
 
@@ -351,7 +397,7 @@ function renderModalPrices(keyword) {
 
   for (const name of names) {
     if (keyword && !name.toLowerCase().includes(keyword)) continue;
-    if (shown >= 100) break; // Batasi 100 baris agar tetap super ringan
+    if (shown >= 100) break;
 
     const item = DB.items[name];
     const price = getItemPrice(name);
