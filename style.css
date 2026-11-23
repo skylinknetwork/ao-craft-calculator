@@ -8,21 +8,21 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   background-color: #12151c;
   color: #e4e8f0;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 12.5px;
+  line-height: 1.35;
 }
 
 .container {
-  max-width: 1220px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 14px;
 }
 
 .topbar {
   background-color: #1b202b;
   border-bottom: 1px solid #2d3545;
-  padding: 14px 0;
-  margin-bottom: 20px;
+  padding: 9px 0;
+  margin-bottom: 12px;
 }
 
 .topbar-inner {
@@ -30,45 +30,45 @@ body {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .topbar h1 {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: #f3c65f;
 }
 
 .topbar-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .card {
   background-color: #1b202b;
   border: 1px solid #2d3545;
-  border-radius: 6px;
-  padding: 16px;
-  margin-bottom: 18px;
+  border-radius: 5px;
+  padding: 11px 13px;
+  margin-bottom: 11px;
 }
 
 .card h2 {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: #f3c65f;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .grid-4 {
   display: grid;
   grid-template-columns: 1fr 1.4fr 1.3fr 0.9fr;
-  gap: 12px;
+  gap: 10px;
 }
 
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 11px;
 }
 
 @media (max-width: 960px) {
@@ -86,27 +86,32 @@ body {
 .form-group label {
   display: block;
   font-weight: 700;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   color: #b7c0d1;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 input[type="text"],
 input[type="number"],
 select {
   width: 100%;
-  padding: 8px 10px;
+  padding: 6px 8px;
   background-color: #12151c;
   border: 1px solid #394357;
   border-radius: 4px;
   color: #ffffff;
   font-family: Arial, sans-serif;
-  font-size: 14px;
+  font-size: 12.5px;
 }
 
 input:focus, select:focus {
   outline: none;
   border-color: #f3c65f;
+}
+
+input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
 }
 
 /* Custom Autocomplete Search Dropdown */
@@ -119,18 +124,18 @@ input:focus, select:focus {
   top: 100%;
   left: 0;
   right: 0;
-  margin-top: 4px;
+  margin-top: 3px;
   background-color: #161b24;
   border: 1px solid #f3c65f;
   border-radius: 4px;
-  max-height: 260px;
+  max-height: 230px;
   overflow-y: auto;
   z-index: 500;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.65);
 }
 
 .search-item {
-  padding: 8px 10px;
+  padding: 5px 9px;
   cursor: pointer;
   border-bottom: 1px solid #252c3b;
   display: flex;
@@ -150,31 +155,31 @@ input:focus, select:focus {
 .search-item-name {
   color: #ffffff;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .search-item-skill {
   color: #9dc1ff;
-  font-size: 11px;
+  font-size: 10.5px;
   white-space: nowrap;
 }
 
 .qty-row {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 /* Banner Peringatan Harga 0 */
 .warning-banner {
-  margin-top: 14px;
-  padding: 11px 14px;
+  margin-top: 10px;
+  padding: 7px 11px;
   background-color: #362218;
   border: 1px solid #e07a38;
-  border-left: 5px solid #ff9447;
+  border-left: 4px solid #ff9447;
   border-radius: 4px;
   color: #ffd8bd;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .warning-banner strong {
@@ -193,12 +198,12 @@ input:focus, select:focus {
 }
 
 .btn {
-  padding: 8px 14px;
+  padding: 6px 12px;
   border: none;
   border-radius: 4px;
   font-family: Arial, sans-serif;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -234,10 +239,10 @@ input:focus, select:focus {
 
 .loading-box {
   text-align: center;
-  padding: 30px;
+  padding: 20px;
   background: #1b202b;
   border: 1px solid #2d3545;
-  border-radius: 6px;
+  border-radius: 5px;
   color: #f3c65f;
   font-weight: 700;
 }
@@ -246,15 +251,17 @@ input:focus, select:focus {
   display: none !important;
 }
 
+/* Tabel Ringkasan Info */
 .info-table {
   width: 100%;
   border-collapse: collapse;
 }
 
 .info-table th, .info-table td {
-  padding: 9px 6px;
+  padding: 4px 5px;
   border-bottom: 1px solid #262d3c;
   text-align: left;
+  font-size: 12.5px;
 }
 
 .info-table th {
@@ -270,7 +277,7 @@ input:focus, select:focus {
 
 .highlight-gold {
   color: #f3c65f;
-  font-size: 15px;
+  font-size: 13.5px;
 }
 
 .profit-plus {
@@ -286,12 +293,16 @@ input:focus, select:focus {
   justify-content: space-between;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 6px;
+  margin-bottom: 7px;
+}
+
+.section-header h2 {
+  margin-bottom: 0;
 }
 
 .hint {
-  font-size: 12px;
+  font-size: 11px;
   color: #8f9bb0;
 }
 
@@ -299,6 +310,7 @@ input:focus, select:focus {
   overflow-x: auto;
 }
 
+/* Tabel Shopping List Super Compact */
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -308,13 +320,15 @@ input:focus, select:focus {
   background-color: #232a38;
   color: #b7c0d1;
   text-align: left;
-  padding: 9px 10px;
-  border-bottom: 2px solid #343e52;
+  padding: 5px 8px;
+  border-bottom: 1px solid #343e52;
+  font-size: 12px;
 }
 
 .data-table td {
-  padding: 8px 10px;
-  border-bottom: 1px solid #262d3c;
+  padding: 3.5px 8px;
+  border-bottom: 1px solid #232a38;
+  font-size: 12.5px;
 }
 
 .data-table tr:hover {
@@ -326,16 +340,18 @@ input:focus, select:focus {
 }
 
 .price-input {
-  width: 140px !important;
+  width: 125px !important;
   text-align: right;
-  padding: 5px 8px !important;
+  padding: 2.5px 6px !important;
+  font-size: 12px !important;
+  height: 24px;
 }
 
 .badge-skill {
   display: inline-block;
-  padding: 2px 7px;
+  padding: 1px 6px;
   border-radius: 3px;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   background-color: #2a3447;
   color: #9dc1ff;
@@ -346,16 +362,16 @@ input:focus, select:focus {
   color: #e6b86a;
 }
 
-/* Crafting Tree */
+/* Crafting Tree Compact */
 .tree-container {
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .tree-node {
   border-left: 2px solid #394357;
-  margin-left: 14px;
-  padding-left: 14px;
-  margin-top: 8px;
+  margin-left: 12px;
+  padding-left: 10px;
+  margin-top: 4px;
 }
 
 .tree-node.root-node {
@@ -371,7 +387,7 @@ input:focus, select:focus {
   align-items: center;
   background-color: #151922;
   border: 1px solid #293142;
-  padding: 7px 10px;
+  padding: 4px 8px;
   border-radius: 4px;
   flex-wrap: wrap;
   gap: 6px;
@@ -385,12 +401,12 @@ input:focus, select:focus {
 .tree-qty {
   color: #f3c65f;
   font-weight: 700;
-  margin-right: 6px;
+  margin-right: 5px;
 }
 
 .tree-meta {
   color: #9ba5b8;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 /* Modal */
@@ -402,7 +418,7 @@ input:focus, select:focus {
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 16px;
+  padding: 14px;
 }
 
 .modal-content {
@@ -410,7 +426,7 @@ input:focus, select:focus {
   border: 1px solid #394357;
   border-radius: 6px;
   width: 100%;
-  max-width: 720px;
+  max-width: 700px;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
@@ -420,7 +436,7 @@ input:focus, select:focus {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 16px;
+  padding: 10px 14px;
   border-bottom: 1px solid #2d3545;
 }
 
@@ -432,16 +448,16 @@ input:focus, select:focus {
   background: none;
   border: none;
   color: #aaa;
-  font-size: 24px;
+  font-size: 22px;
   cursor: pointer;
 }
 
 .modal-body {
-  padding: 16px;
+  padding: 12px 14px;
   overflow-y: auto;
 }
 
 .modal-table-wrap {
-  margin-top: 12px;
+  margin-top: 10px;
   max-height: 55vh;
 }
