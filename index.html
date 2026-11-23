@@ -37,7 +37,7 @@
 
         <div class="form-group search-wrapper">
           <label for="itemSearch">Atau Cari Cepat Nama Item</label>
-          <input type="text" id="itemSearch" placeholder="Ketik nama item..." autocomplete="off" />
+          <input type="text" id="itemSearch" placeholder="Type here to search..." autocomplete="off" />
           <div id="searchDropdown" class="search-dropdown hidden"></div>
         </div>
 
@@ -108,7 +108,7 @@
         </div>
       </section>
 
-      <!-- Tabel Rekap Bahan Mentah / Dasar yang Harus Dibeli -->
+      <!-- Tabel 1: Bahan Utama (Langsung) -->
       <section class="card">
         <div class="section-header">
           <h2>📦 Bahan yang Dibutuhkan</h2>
@@ -126,6 +126,38 @@
               </tr>
             </thead>
             <tbody id="shoppingBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Tabel 2: Bahan Dasar Jika Crafting Dari Awal -->
+      <section class="card" id="rawScratchSection">
+        <div class="section-header">
+          <h2>🛠️ Bahan yang dibutuhkan Jika Anda Crafting Dari Awal</h2>
+          <span class="hint">Total seluruh bahan mentah paling dasar jika semua sub-komponen di-craft sendiri</span>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="rawShoppingTable">
+            <thead>
+              <tr>
+                <th>Nama Bahan</th>
+                <th>Kategori</th>
+                <th class="text-right">Jumlah</th>
+                <th class="text-right">Harga Satuan (Gold)</th>
+                <th class="text-right">Subtotal (Gold)</th>
+              </tr>
+            </thead>
+            <tbody id="rawShoppingBody"></tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4" class="text-right"><strong>Total Biaya Jika Crafting Dari Awal:</strong></td>
+                <td class="text-right"><strong id="rawTotalCost" class="highlight-gold">0 Gold</strong></td>
+              </tr>
+              <tr>
+                <td colspan="4" class="text-right">Harga Modal per 1 Item (Crafting Dari Awal):</td>
+                <td class="text-right"><strong id="rawCostPerItem">0 Gold / pcs</strong></td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </section>
