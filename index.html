@@ -83,26 +83,34 @@
           <h2>Ringkasan Biaya & Harga</h2>
           <table class="info-table">
             <tr>
-              <th>Default Craft Price (NPC/Ref)</th>
-              <td id="resDefaultPrice">-</td>
+              <th>Total Biaya Bahan (Custom / Market)</th>
+              <td id="resDirectTotalCost" class="highlight-gold">-</td>
             </tr>
             <tr>
-              <th>Total Biaya Bahan (Custom/Market)</th>
-              <td id="resTotalCost" class="highlight-gold">-</td>
+              <th>Harga Modal per Item (Custom / Market)</th>
+              <td id="resDirectCostPerItem">-</td>
             </tr>
             <tr>
-              <th>Harga Modal per 1 Item</th>
-              <td id="resCostPerItem">-</td>
+              <th>Total Biaya (Craft dari Awal)</th>
+              <td id="resRawTotalCost" class="highlight-gold">-</td>
             </tr>
             <tr>
-              <th>Harga Jual Item Ini (Opsional)</th>
+              <th>Harga Modal per Item (Craft dari Awal)</th>
+              <td id="resRawCostPerItem">-</td>
+            </tr>
+            <tr>
+              <th>Harga Jual per Item (Opsional)</th>
               <td>
                 <input type="text" id="sellPriceInput" class="price-input" placeholder="0" />
               </td>
             </tr>
             <tr>
-              <th>Estimasi Profit / Rugi</th>
-              <td id="resProfit">-</td>
+              <th>Estimasi Profit (Custom / Market)</th>
+              <td id="resDirectProfit">-</td>
+            </tr>
+            <tr>
+              <th>Estimasi Profit (Craft dari Awal)</th>
+              <td id="resRawProfit">-</td>
             </tr>
           </table>
         </div>
