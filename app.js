@@ -89,7 +89,9 @@ function selectItemAndCalculate(itemName) {
     populateCategoryItems(item.skill_name);
   }
   document.getElementById("categoryItemSelect").value = itemName;
-  document.getElementById("itemSearch").value = itemName;
+
+  // Langsung bersihkan kotak pencarian setelah item dipilih
+  document.getElementById("itemSearch").value = "";
   document.getElementById("searchDropdown").classList.add("hidden");
 
   calculateItem(itemName);
@@ -322,7 +324,8 @@ document.getElementById("skillSelect").addEventListener("change", (e) => {
 document.getElementById("categoryItemSelect").addEventListener("change", (e) => {
   const val = e.target.value;
   if (val && DB.items[val]) {
-    document.getElementById("itemSearch").value = val;
+    document.getElementById("itemSearch").value = "";
+    document.getElementById("searchDropdown").classList.add("hidden");
     calculateItem(val);
   }
 });
